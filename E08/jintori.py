@@ -9,6 +9,14 @@ class Point(object):
         self.x = x
         self.y = y
 
+    def __eq__(self, other):
+        if other is None or type(self) != type(other):
+            return False
+        return self.x == other.x and self.y == other.y
+
+    def __ne__(self,other):
+        return not self.__eq__(other)
+
 class Board(object):
     def __init__(self, white, black):
         self.field = [[None for i in range(19)] for j in range(19)]
@@ -32,9 +40,15 @@ class Board(object):
             self.field[x][y] = color
             self.dots[color].append(Point(x,y))
 
-    def is_valid_rect(self,ul,ur,dl,dr,color):
-        for x in range(ul.x,ul.x+(ur.x-ul.x)+1):
-            for y in range(ul.y,ul.y+(dl.y-ul.y)+1):
+    def is_valid_rect(self,ul,dr,color):
+        ur = Point(dr.x, ul.y)
+        dl = Point(ul.x, dr.y)
+
+        if ur not in self.dots[color] or dl not in self.dots[color]:
+            return False
+
+        for x in range(ul.x,ul.x+(dr.x-ul.x)+1):
+            for y in range(ul.y,ul.y+(dr.y-ul.y)+1):
                 if self.field[x][y] == color or self.field[x][y] == None:
                     pass
                 else:
@@ -47,15 +61,10 @@ class Board(object):
         if color == 1:
             return 'b'
 
-    def colorize_union(self,ul,ur,dl,dr,color):
-        for x in range(ul.x,ul.x+(ur.x-ul.x)):
-            for y in range(ul.y,ul.y+(dl.y-ul.y)):
+    def colorize_union(self,ul,dr,color):
+        for x in range(ul.x,ul.x+(dr.x-ul.x)):
+            for y in range(ul.y,ul.y+(dr.y-ul.y)):
                 self.union[x][y] = self.get_color_name(color)
-    #            if self.union[x][y] == self.get_color_name(color):
-    #                continue
-    #            else:
-    #                self.union[x][y] = self.get_color_name(color)
-    #                self.num_of_colorize_union[color] += 1
 
     def get_num_of_colorize_union(self,color):
         sum_of_union = 0
@@ -67,16 +76,15 @@ class Board(object):
 
     def solve(self):
         for color in range(0,2):
-            for points in list(itertools.combinations(self.dots[color],4)):
-                ul, ur, dl, dr = sorted(sorted(list(points), key=operator.attrgetter('x')), key=operator.attrgetter('y'))
-                if ul.x == dl.x and ul.y == ur.y and dl.y == dr.y and ur.x == dr.x:
-                    if self.is_valid_rect(ul,ur,dl,dr,color):
-                        self.colorize_union(ul,ur,dl,dr,color)
+            for points in list(itertools.combinations(self.dots[color],2)):
+                ul, dr = sorted(sorted(list(points), key=operator.attrgetter('x')), key=operator.attrgetter('y'))
+                if ul.x < dr.x and ul.y < dr.y:
+                    if self.is_valid_rect(ul,dr,color):
+                        self.colorize_union(ul,dr,color)
                 else:
                     continue
 
         return str(self.get_num_of_colorize_union(0)) + ',' + str(self.get_num_of_colorize_union(1))
-        #return str(self.num_of_colorize_union[0]) + ',' + str(self.num_of_colorize_union[1])
 
     def show_board(self):
         pprint(self.union,width=1024, depth=18)

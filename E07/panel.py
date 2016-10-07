@@ -1,11 +1,48 @@
 import unittest
 
-class Panel(object):
+class Lamp(object):
     def __init__(self, visible, unvisible):
-        self.visibleList = visible.split(':')
-        self.unvisibleList = unvisible.split(':')
+        self.visible = visible
+        self.unvisible = unvisible
+        self.has_disappeared = False
+        self.possible_num = []
+        self._analyze()
 
-    def getPossibleNum(self, visible, unvisible):
+    def is_valid(self):
+        if len(self.possible_num) != 0:
+            if self.possible_num[0] == '-':
+                return False
+            else:
+                return True
+        else:
+            return False
+
+    def getMax(self, head=True, last=False):
+        if self.is_valid():
+            if head and not last:
+                if self.possible_num[-1] == 0:
+                    return '-'
+            return self.possible_num[-1]
+        elif self.has_disappeared:
+            return ''
+        else:
+            return '-'
+
+    def getMin(self, head=True, last=False):
+        if self.is_valid():
+            if head and not last:
+                if self.possible_num[0] == 0:
+                    if len(self.possible_num) >= 2:
+                        return self.possible_num[1]
+                    else:
+                        return '-'
+            return self.possible_num[0]
+        elif self.has_disappeared:
+            return ''
+        else:
+            return '-'
+
+    def _analyze(self):
         patterns = [
           [int('3f', 16), int('40', 16)],
           [int('06', 16), int('79', 16)],
@@ -16,41 +53,86 @@ class Panel(object):
           [int('7d', 16), int('02', 16)],
           [int('27', 16), int('58', 16)],
           [int('7f', 16), int('00', 16)],
-          [int('6f', 16), int('10', 16)]
+          [int('6f', 16), int('10', 16)],
+          [int('00', 16), int('7f', 16)]
         ]
-        possible_num = []
-        for num in range(0,10):
-            if patterns[num][0] == ( patterns[num][0] | visible ) and patterns[num][1] == ( patterns[num][1] | unvisible ):
-                possible_num.append(num)
-        if len(possible_num) == 0:
-            possible_num.append('-')
-        return possible_num
+        for num in range(0,11):
+            if patterns[num][0] == ( patterns[num][0] | self.visible ) and patterns[num][1] == ( patterns[num][1] | self.unvisible ):
+                if num == 10:
+                    self.has_disappeared = True
+                else:
+                    self.possible_num.append(num)
+        if len(self.possible_num) == 0 and not self.has_disappeared:
+            self.possible_num.append('-')
+
+class Panel(object):
+    def __init__(self, visible, unvisible):
+        self.visibleList = visible.split(':')
+        self.unvisibleList = unvisible.split(':')
+        self.lampList = []
 
     def solve(self):
+        for visible, unvisible in zip(self.visibleList, self.unvisibleList):
+            lamp = Lamp(int(visible,16), int(unvisible,16))
+            self.lampList.append(lamp)
+
+        min_head = True
+        max_head = True
+        last = False
         ans_max = ''
         ans_min = ''
-        for visible, unvisible in zip(self.visibleList, self.unvisibleList):
-            print(visible)
-            possible_number_list = self.getPossibleNum(int(visible, 16), int(unvisible, 16))
-            minNum = possible_number_list[0]
-            maxNum = possible_number_list[-1]
-            if minNum != '-' and maxNum != '-':
+        for index, lmp in enumerate(self.lampList):
+            if index == len(self.lampList) - 1:
+                max_head = False
+                min_head = False
+                last = True
+            if lmp.is_valid():
+                maxNum = lmp.getMax(max_head, last)
+                max_head = False
+                if min_head:
+                    if lmp.has_disappeared:
+                        minNum = ''
+                    else:
+                        minNum = lmp.getMin(min_head, last)
+                        min_head = False
+                else:
+                    minNum = lmp.getMin(min_head, last)
+                    if minNum == '' or minNum == '-':
+                        return '-'
+
+            else:
+                if lmp.has_disappeared:
+                    if max_head and not last:
+                        maxNum = ''
+                    else:
+                        return '-'
+
+                    if min_head and not last:
+                        minNum = ''
+                    else:
+                        return '-'
+                else:
+                    return '-'
+
+            if maxNum == '-' or minNum == '-':
+                return '-'
+            else:
                 ans_min += str(minNum)
                 ans_max += str(maxNum)
-            else:
-                return '-'
 
         return ans_min + ',' + ans_max
 
 class PanelTest(unittest.TestCase):
     def test_solve(self):
-        for dataset in TEST_DATA.split('\n'):
+        for test_num, dataset in enumerate(TEST_DATA.split('\n')):
             dataset = dataset.rstrip()
             view, expected = dataset.split(' ')
             visible, unvisible = view.rstrip(',').split(',')
             panel = Panel(visible, unvisible)
             actual = panel.solve()
+            print('---TEST {0}---'.format(test_num))
             self.assertEqual(expected, actual)
+            print('OK')
 
 TEST_DATA='''06:4b:46:64:6d,79:20:10:10:02, 12345,13996
 41:00,3e:01, -

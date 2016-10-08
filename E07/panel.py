@@ -1,51 +1,66 @@
 import unittest
 
+
 class Lamp(object):
     def __init__(self, visible, unvisible):
         self.visible = visible
         self.unvisible = unvisible
-        self.has_disappeared = False
         self.possible_num = []
+        self._is_able_to_unlit = False
+        self._is_valid = False
         self._analyze()
 
-    def is_unlint(self):
-        pass
+    def is_unlit(self):
+        return len(self.possible_num) == 0 and self._is_able_to_unlit
 
     def is_valid(self):
-        if len(self.possible_num) != 0:
-            if self.possible_num[0] == '-':
-                return False
-            else:
-                return True
-        else:
-            return False
+        return self._is_valid
+    
+    def has_possible_num(self):
+        return len(self.possible_num) > 0
+
+    def is_able_to_unlit(self):
+        return self._is_able_to_unlit
 
     def getMax(self, head=True, last=False):
-        if self.is_valid():
+        if self.has_possible_num():
             if head and not last:
                 if self.possible_num[-1] == 0:
-                    return '-'
+                    if len(self.possible_num) > 1:
+                        return self.possible_num[-2]
+                    elif self._is_able_to_unlit:
+                        return ''
+                    else:
+                        return '-'
             return self.possible_num[-1]
-        elif self.has_disappeared:
-            return ''
         else:
             return '-'
 
     def getMin(self, head=True, last=False):
-        if self.is_valid():
+        if self.has_possible_num():
             if head and not last:
-                if self.possible_num[0] == 0:
-                    if len(self.possible_num) >= 2:
+                if self._is_able_to_unlit:
+                    return ''
+                elif self.possible_num[0] == 0:
+                    if len(self.possible_num) > 1:
                         return self.possible_num[1]
                     else:
                         return '-'
             return self.possible_num[0]
-        elif self.has_disappeared:
-            return ''
         else:
             return '-'
 
     def _analyze(self):
+        self._analyze_if_panel_is_able_to_unlit()
+        self._analyze_possible_num()
+        self._analyze_if_valid()
+
+    def _analyze_if_panel_is_able_to_unlit(self):
+        unlit_pattern = [int('00', 16), int('7f', 16)]
+        if unlit_pattern[0] == ( unlit_pattern[0] | self.visible ) and unlit_pattern[1] == ( unlit_pattern[1] | self.unvisible ):
+            self._is_able_to_unlit = True
+
+    def _analyze_possible_num(self):
         patterns = [
           [int('3f', 16), int('40', 16)],
           [int('06', 16), int('79', 16)],
@@ -57,16 +72,17 @@ class Lamp(object):
           [int('27', 16), int('58', 16)],
           [int('7f', 16), int('00', 16)],
           [int('6f', 16), int('10', 16)],
-          [int('00', 16), int('7f', 16)]
         ]
-        for num in range(0,11):
+        for num in range(0,10):
             if patterns[num][0] == ( patterns[num][0] | self.visible ) and patterns[num][1] == ( patterns[num][1] | self.unvisible ):
-                if num == 10:
-                    self.has_disappeared = True
-                else:
-                    self.possible_num.append(num)
-        if len(self.possible_num) == 0 and not self.has_disappeared:
-            self.possible_num.append('-')
+                self.possible_num.append(num)
+
+    def _analyze_if_valid(self):
+        if len(self.possible_num) != 0 or self._is_able_to_unlit:
+            self._is_valid = True
+        else:
+            self._is_valid = False
+
 
 class Panel(object):
     def __init__(self, visible, unvisible):
@@ -83,11 +99,17 @@ class Panel(object):
     def getUnlintLampIndex(self):
         rtn = None
         for index,lamp in enumerate(self.lampList):
-            if lamp.is_unlint():
+            if lamp.is_unlit():
                 rtn = index
 
         return rtn
 
+    def checkLampsCanBeTurnedOff(self,index):
+        for lamp in self.lampList[:index+1]:
+            if not lamp.is_able_to_unlit():
+                return False
+
+        return True
 
     def solve(self):
         index = self.getUnlintLampIndex()
@@ -96,50 +118,59 @@ class Panel(object):
         if index == None:
             is_initial_min = True
             is_initial_max = True
-            for i, lamp in enumerate(self.lampList()):
-                maxVal += lamp.getMax(is_initial_max)
+            for i, lamp in enumerate(self.lampList):
 
                 # if it is in last, minVal
                 if i+1 < len(self.lampList):
-                    minVal += lamp.getMin(is_initial_min, is_last=False)
+                    maxVal = lamp.getMax(is_initial_max, last=False)
+                    minVal = lamp.getMin(is_initial_min, last=False)
                 # for Last
                 else:
-                    minVal += lamp.getMin(is_initial_min, is_last=True)
+                    maxVal = lamp.getMax(is_initial_max, last=True)
+                    minVal = lamp.getMin(is_initial_min, last=True)
 
                 is_initial_max = False
 
                 if minVal != '':
                     is_initial_min = False
 
+                if maxVal == '-' or minVal == '-':
+                    return '-'
+
                 maxVals += str(maxVal)
                 minVals += str(minVal)
         else:
-            if index == len(self.lampList):
+            if index+1 == len(self.lampList):
+                return '-'
+            elif not self.checkLampsCanBeTurnedOff(index):
                 return '-'
             else:
-                if self.checkLampsCanBeTurnedOff(index):
-                    is_initial_min = True
-                    is_initial_max = True
-                    for i, lamp in enumerate(self.lampList[index+1:]):
-                        maxVal += lamp.getMax(is_initial_max)
+                is_initial_min = True
+                is_initial_max = True
+                self.lampList = self.lampList[index+1:]
+                for i, lamp in enumerate(self.lampList):
 
-                        # if it is in last, minVal
-                        if i+1 < len(self.lampList):
-                            minVal += lamp.getMin(is_initial_min, is_last=False)
-                        # for Last
-                        else:
-                            minVal += lamp.getMin(is_initial_min, is_last=True)
+                    # if it is in last, minVal
+                    if i+1 < len(self.lampList):
+                        maxVal = lamp.getMax(is_initial_max, last=False)
+                        minVal = lamp.getMin(is_initial_min, last=False)
+                    # for Last
+                    else:
+                        maxVal = lamp.getMax(is_initial_max, last=True)
+                        minVal = lamp.getMin(is_initial_min, last=True)
 
-                        is_initial_max = False
+                    is_initial_max = False
 
-                        if minVal != '':
-                            is_initial_min = False
+                    if minVal != '':
+                        is_initial_min = False
 
-                        maxVals += str(maxVal)
-                        minVals += str(minVal)
+                    if maxVal == '-' or minVal == '-':
+                        return '-'
+
+                    maxVals += str(maxVal)
+                    minVals += str(minVal)
 
         return "{0},{1}".format(minVals,maxVals)
-
 
 
 class PanelTest(unittest.TestCase):
@@ -153,6 +184,8 @@ class PanelTest(unittest.TestCase):
             print('---TEST {0}---'.format(test_num))
             self.assertEqual(expected, actual)
             print('OK')
+        print('---TEST PASSED!!---')
+
 
 TEST_DATA='''06:4b:46:64:6d,79:20:10:10:02, 12345,13996
 41:00,3e:01, -
@@ -200,8 +233,8 @@ TEST_DATA='''06:4b:46:64:6d,79:20:10:10:02, 12345,13996
 04:18:54:38:00:14:70,10:65:09:01:6c:00:0d, -
 18:04:26:20:04:24:1a,02:21:50:48:02:08:00, 6177540,6177678
 00:08:34:00:00:64:06,18:24:02:00:61:08:61, 260141,7269141
-00:02:0a:04:4a:00:20,18:21:24:02:04:60:19, 125214,7126214
-'''
+00:02:0a:04:4a:00:20,18:21:24:02:04:60:19, 125214,7126214'''
+
 
 if __name__ == '__main__':
     unittest.main()

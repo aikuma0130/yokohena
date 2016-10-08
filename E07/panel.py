@@ -70,57 +70,68 @@ class Panel(object):
         self.visibleList = visible.split(':')
         self.unvisibleList = unvisible.split(':')
         self.lampList = []
+        self._setLamp()
 
-    def solve(self):
+    def _setLamp(self):
         for visible, unvisible in zip(self.visibleList, self.unvisibleList):
             lamp = Lamp(int(visible,16), int(unvisible,16))
             self.lampList.append(lamp)
 
-        min_head = True
-        max_head = True
-        last = False
-        ans_max = ''
-        ans_min = ''
-        for index, lmp in enumerate(self.lampList):
-            if index == len(self.lampList) - 1:
-                max_head = False
-                min_head = False
-                last = True
-            if lmp.is_valid():
-                maxNum = lmp.getMax(max_head, last)
-                max_head = False
-                if min_head:
-                    if lmp.has_disappeared:
-                        minNum = ''
-                    else:
-                        minNum = lmp.getMin(min_head, last)
-                        min_head = False
+    def getOffLampIndex(self):
+        pass
+
+    def solve(self):
+        index = self.getOffLampIndex()
+        maxVals = ''
+        minVals = ''
+        if index == None:
+            is_initial_min = True
+            is_initial_max = True
+            for i, lamp in enumerate(self.lampList()):
+                maxVal += lamp.getMax(is_initial_max)
+
+                # if it is in last, minVal
+                if i+1 < len(self.lampList):
+                    minVal += lamp.getMin(is_initial_min, is_last=False)
+                # for Last
                 else:
-                    minNum = lmp.getMin(min_head, last)
-                    if minNum == '' or minNum == '-':
-                        return '-'
+                    minVal += lamp.getMin(is_initial_min, is_last=True)
 
-            else:
-                if lmp.has_disappeared:
-                    if max_head and not last:
-                        maxNum = ''
-                    else:
-                        return '-'
+                is_initial_max = False
 
-                    if min_head and not last:
-                        minNum = ''
-                    else:
-                        return '-'
-                else:
-                    return '-'
+                if minVal != '':
+                    is_initial_min = False
 
-            if maxNum == '-' or minNum == '-':
+                maxVals += str(maxVal)
+                minVals += str(minVal)
+        else:
+            if index == len(self.lampList):
                 return '-'
             else:
-                ans_min += str(minNum)
-                ans_max += str(maxNum)
+                if self.checkLampsCanBeTurnedOff(index):
+                    is_initial_min = True
+                    is_initial_max = True
+                    for i, lamp in enumerate(self.lampList[index+1:]):
+                        maxVal += lamp.getMax(is_initial_max)
 
-        return ans_min + ',' + ans_max
+                        # if it is in last, minVal
+                        if i+1 < len(self.lampList):
+                            minVal += lamp.getMin(is_initial_min, is_last=False)
+                        # for Last
+                        else:
+                            minVal += lamp.getMin(is_initial_min, is_last=True)
+
+                        is_initial_max = False
+
+                        if minVal != '':
+                            is_initial_min = False
+
+                        maxVals += str(maxVal)
+                        minVals += str(minVal)
+
+        return "{0},{1}".format(minVals,maxVals)
+
+
 
 class PanelTest(unittest.TestCase):
     def test_solve(self):

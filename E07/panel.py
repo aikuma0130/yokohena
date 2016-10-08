@@ -8,6 +8,9 @@ class Lamp(object):
         self.possible_num = []
         self._analyze()
 
+    def is_unlint(self):
+        pass
+
     def is_valid(self):
         if len(self.possible_num) != 0:
             if self.possible_num[0] == '-':
@@ -77,11 +80,17 @@ class Panel(object):
             lamp = Lamp(int(visible,16), int(unvisible,16))
             self.lampList.append(lamp)
 
-    def getOffLampIndex(self):
-        pass
+    def getUnlintLampIndex(self):
+        rtn = None
+        for index,lamp in enumerate(self.lampList):
+            if lamp.is_unlint():
+                rtn = index
+
+        return rtn
+
 
     def solve(self):
-        index = self.getOffLampIndex()
+        index = self.getUnlintLampIndex()
         maxVals = ''
         minVals = ''
         if index == None:

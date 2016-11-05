@@ -167,13 +167,13 @@ class Test(unittest.TestCase):
             self.assertEqual(actual, expect)
             print('OK')
         # For one testcase
-        #for num, line in enumerate(TEST_DATA.split('\n')):
-        #    if num == 12:
+        #for test_num, line in enumerate(TEST_DATA.split('\n')):
+        #    if test_num == 12:
         #        line = line.rstrip()
         #        inputs, expect = line.split(' ')
         #        field = Field()
         #        actual = field.solve(inputs)
-        #        print('----TEST {0}----'.format(num))
+        #        print('----TEST {0}----'.format(test_num))
         #        print('inputs: {0}'.format(inputs))
         #        print('actual: {0}'.format(actual))
         #        self.assertEqual(actual, expect)

@@ -166,6 +166,10 @@ TEST_DATA='''
 /*68*/ test( "finr", "-" );    
 /*69*/ test( "qstu", "-" );    
 /*70*/ test( "abdq", "-" );    
+/*71*/ test( "jkln", "-" );    
+/*72*/ test( "fjkn", "-" );    
+/*73*/ test( "ijmn", "-" );    
+/*74*/ test( "flqr", "-" );    
 '''
 
 

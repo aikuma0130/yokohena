@@ -32,19 +32,6 @@ class Tetromino(object):
         while True:
             if not self.move():
                 break
-        print(self.now_str)
-
-    #def move(self, direction):
-    #    _hexagons = []
-    #    for hexagon in self.hexagons:
-    #        if getattr(hexagon, direction, default=None) != None:
-    #            _hexagons.append(Hexagon(getattr(hexagon, direction)))
-    #        else:
-    #            return False
-
-    #    self.now = _hexagons
-    #    self.now_str = "".join([ s.name for s in self.now ])
-    #    return True
 
     def move(self):
         _hexagons = []

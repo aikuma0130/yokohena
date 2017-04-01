@@ -1,52 +1,108 @@
 import re
 import unittest 
 
-class Hexagon(self, name):
-    def __ini__(self, name):
+
+class Hexagon(object):
+    def __init__(self, name):
         self.name = name
         self.right = chr( ord(name) + 1 )
-        self.left = chr( ord(name) - 1 )
-        self.up = chr( ord(name) - 5 )
-        self.down = chr( ord(name) + 5 )
+        #self.left = chr( ord(name) - 1 )
+        #self.up = chr( ord(name) - 5 )
+        self.down = chr( ord(name) + 4 )
 
-        if self.right in [ 'a', 'f', 'j', 'o', 's' ]:
+        if self.right in [ 'a', 'f', 'j', 'o', 's', 'x' ]:
             self.right = None
-        if self.left in [ 'e', 'i', 'n', 'r', 'w' ] or self.name == 'a':
-            self.left = None
-        if self.up in [ 'e', 'n', 'w']:
-            self.up = None
-        if self.down in [ 'f', 'o', 'w'] or self.name in ['s', 't', 'u', 'v', 'w']:
+        #if self.left in [ 'e', 'i', 'n', 'r', 'w' ] or self.name == 'a':
+        #    self.left = None
+        #if self.up in [ 'e', 'n', 'w']:
+        #    self.up = None
+        if self.down in [ 'e', 'n', 'w' ] or self.name in ['s', 't', 'u', 'v', 'w']:
             self.down = None
+
+
+class Tetromino(object):
+
+    def __init__(self, hexagons):
+        self.B = [ 'lqrv', 'nrvw', 'pqru', 'mqrw', 'mnrv', 'ruvw' ]
+        self.D = [ 'mrvw', 'nqrv', 'quvw', 'mnrw', 'mqru', 'pqrv' ]
+        self.I = [ 'tuvw', 'hmrw', 'imqu' ]
+        self.hexagons = hexagons
+        self.now = hexagons
+        self.now_str = "".join([ s.name for s in self.now ])
+        while True:
+            if not self.move():
+                break
+        print(self.now_str)
+
+    #def move(self, direction):
+    #    _hexagons = []
+    #    for hexagon in self.hexagons:
+    #        if getattr(hexagon, direction, default=None) != None:
+    #            _hexagons.append(Hexagon(getattr(hexagon, direction)))
+    #        else:
+    #            return False
+
+    #    self.now = _hexagons
+    #    self.now_str = "".join([ s.name for s in self.now ])
+    #    return True
+
+    def move(self):
+        _hexagons = []
+        for hexagon in self.now:
+            if hexagon.right != None:
+                _hexagons.append(Hexagon(hexagon.right))
+            else:
+                break
+
+        if len(_hexagons) == 4:
+            self.now = _hexagons
+            self.now_str = "".join([ s.name for s in self.now ])
+            return True
+
+        _hexagons = []
+        for hexagon in self.now:
+            if hexagon.down != None:
+                _hexagons.append(Hexagon(hexagon.down))
+            else:
+                break
+
+        if len(_hexagons) == 4:
+            self.now = _hexagons
+            self.now_str = "".join([ s.name for s in self.now ])
+            return True
+
+        return False
+
+    def isB(self):
+        if self.now_str in self.B:
+            return True
+
+    def isD(self):
+        if self.now_str in self.D:
+            return True
+
+    def isI(self):
+        if self.now_str in self.I:
+            return True
 
 
 class Solver(object):
     def __init__(self):
         pass
 
-    def isB(self, inputs):
-        if inputs.sort() in self.correctB:
-            return True
-        else:
-            return False
-
-    def isD(self, zahyo):
-        if inputs.sort() in self.correctC:
-            return True
-        else:
-            return False
-
-    def isI(self, zahyo):
-        if inputs.sort() in self.correctI:
-            return True
-        else:
-            return False
-
     def solve(self, inputs):
-        if self.isB(inputs):
+        hexagons = []
+        sorted_inputs = [ s for s in inputs ]
+        sorted_inputs.sort()
+        for name in sorted_inputs:
+            hexagons.append(Hexagon(name))
+        tetromino = Tetromino(hexagons)
+
+        if tetromino.isB():
             return "B"
-        elif self.isD(inputs):
+        elif tetromino.isD():
             return "D"
-        elif self.isI(inputs):
+        elif tetromino.isI():
             return "I"
         else:
             return "-"
@@ -146,13 +202,18 @@ class Test(unittest.TestCase):
             self.assertEqual(actual, expect)
             print('OK')
         # For one testcase
-        #for test_num, line in enumerate(TEST_DATA.split('\n')):
+        #for test_num, line in enumerate(TEST_DATA.split('\n')[1:-2]):
         #    test_num += 1
-        #    if test_num == 12:
-        #        line = line.rstrip()
-        #        inputs, expect = line.split(' ')
-        #        field = Field()
-        #        actual = field.solve(inputs)
+        #    if test_num == 1:
+        #        first_pattern = re.compile('^.*test\(')
+        #        end_pattern = re.compile('\); *')
+        #        line = first_pattern.sub('', line)
+        #        line = end_pattern.sub('', line)
+        #        line = line.replace(' ', '')
+        #        line = line.replace('"', '')
+        #        inputs, expect = line.split(',')
+        #        solver = Solver()
+        #        actual = solver.solve(inputs)
         #        print('----TEST {0}----'.format(test_num))
         #        print('inputs: {0}'.format(inputs))
         #        print('actual: {0}'.format(actual))

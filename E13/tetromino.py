@@ -29,9 +29,8 @@ class Tetromino(object):
         self.hexagons = hexagons
         self.now = hexagons
         self.now_str = "".join([ s.name for s in self.now ])
-        while True:
-            if not self.move():
-                break
+        while self.move():
+            pass
 
     def move(self):
         _hexagons = []
